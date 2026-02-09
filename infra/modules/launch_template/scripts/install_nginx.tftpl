@@ -1,0 +1,31 @@
+#!/bin/bash
+# Update and Install Nginx
+apt-get update -y
+apt-get install -y nginx
+
+# Create a custom Nginx config for health checks
+cat <<EOF > /etc/nginx/sites-available/default
+server {
+    listen 80 default_server;
+    root /var/www/html;
+    index index.html;
+
+    location /health {
+        access_log off;
+        return 200 'OK';
+    }
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+}
+EOF
+
+# Inject the HTML code passed from Terraform/GitHub Actions
+cat <<EOF > /var/www/html/index.html
+${index_html}
+EOF
+
+# Ensure Nginx is running and picks up new config
+systemctl restart nginx
+systemctl enable nginx
