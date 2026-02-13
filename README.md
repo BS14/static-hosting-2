@@ -128,7 +128,8 @@ Static website hosting infrastructure on AWS using Launch Templates, Auto Scalin
 ## CI/CD Workflow
 
 ### Trigger
-- **Automatic**: Push changes to `code/**` files
+- Push changes to `code/**` files [Dev]
+- If any new tags are created with `v` initials [Prod]
 - **Manual**: `workflow_dispatch` (via GitHub UI)
 
 ### Deployment Process
@@ -188,7 +189,7 @@ static-hosting-2/
 
 - AWS Account with appropriate permissions
 - GitHub repository with GitHub Actions enabled
-- Domain name with Route 53 hosted zone (for ACM validation)
+- Domain name
 
 ## Deployment
 

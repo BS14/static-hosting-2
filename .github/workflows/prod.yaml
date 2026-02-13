@@ -3,8 +3,8 @@ name: Deploy Prod
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'code/**' # Only triggers when code changes
+    tags:
+      - 'v*' 
 
 jobs:
   deploy:
