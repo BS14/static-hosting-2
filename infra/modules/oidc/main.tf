@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "assume_role" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       # Restricts access to your repo on any branch
-      values   = ["repo:${var.github_repo}:*"]
+      values = ["repo:${var.github_repo}:*"]
     }
   }
 }
@@ -38,13 +38,26 @@ resource "aws_iam_role_policy" "cli_permissions" {
         Resource = [var.launch_template_arn]
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "autoscaling:UpdateAutoScalingGroup",
           "autoscaling:StartInstanceRefresh",
           "autoscaling:DescribeAutoScalingGroups"
         ]
         Resource = [var.asg_arn]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:RunInstances",
+          "ec2:CreateTags"
+        ]
+        Resource = "*"
+        Condition = {
+          StringLike = {
+            "ec2:LaunchTemplate" = [var.launch_template_arn]
+          }
+        }
       }
     ]
   })

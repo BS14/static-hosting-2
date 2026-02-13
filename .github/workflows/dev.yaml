@@ -27,9 +27,40 @@ jobs:
       - name: Create New Launch Template Version
         id: lt_update
         run: |
-          # Read the new code
-          USER_DATA_CONTENT=$(cat code/index.html)
-          
+          FULL_USER_DATA=$(cat <<EOF
+          #!/bin/bash
+          # Update and Install Nginx
+          apt-get update -y
+          apt-get install -y nginx
+
+          # Create custom Nginx config for health checks (Matches your ALB TG)
+          cat <<EON > /etc/nginx/sites-available/default
+          server {
+              listen 80 default_server;
+              root /var/www/html;
+              index index.html;
+
+              location /health {
+                  access_log off;
+                  return 200 'OK';
+              }
+
+              location / {
+                  try_files \$uri \$uri/ =404;
+              }
+          }
+          EON
+
+          # Inject the code from your repository
+          cat <<EOC > /var/www/html/index.html
+          $(cat code/index.html)
+          EOC
+
+          # Restart Nginx
+          systemctl restart nginx
+          systemctl enable nginx
+          EOF
+          )
           # We update the template with a new User Data script
           # Note: We use a heredoc to build the full bash script for the LT
           NEW_VERSION=$(aws ec2 create-launch-template-version \
