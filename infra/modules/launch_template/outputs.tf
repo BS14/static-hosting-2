@@ -9,3 +9,7 @@ output "launch_template_latest_version" {
 output "launch_template_name" {
   value = aws_launch_template.this.name
 }
+
+output "launch_template_arn" {
+  value = aws_launch_template.this.arn
+}

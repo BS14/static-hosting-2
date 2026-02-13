@@ -1,0 +1,52 @@
+name: Deploy Code via CLI
+
+on:
+  push:
+    paths:
+      - 'code/**' # Only triggers when code changes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE_DEV }}
+          aws-region: us-east-1
+
+      - name: Create New Launch Template Version
+        id: lt_update
+        run: |
+          # Read the new code
+          USER_DATA_CONTENT=$(cat code/index.html)
+          
+          # We update the template with a new User Data script
+          # Note: We use a heredoc to build the full bash script for the LT
+          NEW_VERSION=$(aws ec2 create-launch-template-version \
+            --launch-template-name "${{ secrets.LT_NAME_DEV }}" \
+            --source-version '$Latest' \
+            --launch-template-data "{\"UserData\":\"$(echo "#!/bin/bash
+            echo '$USER_DATA_CONTENT' > /var/www/html/index.html
+            systemctl restart nginx" | base64 -w 0)\"}" \
+            --query 'LaunchTemplateVersion.VersionNumber' \
+            --output text)
+          
+          echo "NEW_LT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Update ASG and Trigger Refresh
+        run: |
+          # Point the ASG to the version we just created
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name "${{ secrets.ASG_NAME_DEV }}" \
+            --launch-template "LaunchTemplateName=${{ secrets.LT_NAME_DEV }},Version=$NEW_LT_VERSION"
+
+          # Start the rolling update
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name "${{ secrets.ASG_NAME_DEV }}"

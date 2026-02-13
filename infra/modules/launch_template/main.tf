@@ -14,7 +14,6 @@ resource "aws_launch_template" "this" {
   instance_type = var.instance_type
   ebs_optimized = true
 
-  # Security: Enforce IMDSv2 (Tokens Required)
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required" # IMDSv2
@@ -48,5 +47,8 @@ resource "aws_launch_template" "this" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes = [
+      user_data
+    ]
   }
 }

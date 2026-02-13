@@ -77,18 +77,46 @@ module "launch_template" {
   index_html_content = file("${path.module}/../../code/index.html")
 }
 
+module "acm" {
+  source      = "../modules/acm"
+  project     = var.project
+  env         = var.env
+  domain_name = "static-2.binaya14.com.np"
+}
 
-#module "asg" {
-# source                  = "../modules/asg/"
-# project                 = var.project
-# env                     = var.env
-# private_subnet_ids      = module.network.private_subnet_ids
-# target_group_arn        = module.alb.target_group_arn
-# launch_template_id      = module.launch_template.launch_template_id
-# launch_template_version = "$Latest"
+module "alb" {
+  source            = "../modules/lb/"
+  project           = var.project
+  env               = var.env
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids
+  alb_sg_id         = module.alb_sg.sg_id
+  certificate_arn   = module.acm.certificate_arn
+  domain_name       = "static-2.binaya14.com.np"
+}
 
-# # Capacity settings
-# min_size         = 1
-# max_size         = 3
-# desired_capacity = 2
-#}
+
+module "asg" {
+  source                  = "../modules/asg/"
+  project                 = var.project
+  env                     = var.env
+  private_subnet_ids      = module.network.private_subnet_ids
+  target_group_arn        = module.alb.target_group_arn
+  launch_template_id      = module.launch_template.launch_template_id
+  launch_template_version = module.launch_template.launch_template_latest_version
+
+  # Capacity settings
+  min_size         = 1
+  max_size         = 3
+  desired_capacity = 1
+}
+
+module "oidc" {
+  source              = "../modules/oidc/"
+  project             = var.project
+  env                 = var.env
+  github_repo         = "BS14/static-hosting-2"
+  launch_template_arn = module.launch_template.launch_template_arn
+  asg_arn             = module.asg.asg_arn
+
+}
