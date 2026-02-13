@@ -261,4 +261,4 @@ After `terraform apply`, the following outputs are available:
 ![Instance Refresh](images/instance-refresh.png)
 
 ### Running Website
-![Runnning Webpage](images/website.png)
+![Running Webpage](images/website.png)
