@@ -22,7 +22,6 @@ resource "aws_lb_target_group" "tg" {
   }
 }
 
-# 1. HTTPS Listener: Default to Deny (Security Best Practice)
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
   port              = "443"
@@ -40,7 +39,6 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# 2. Host Header Rule: Only allow your specific domain
 resource "aws_lb_listener_rule" "host_based_routing" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 100
@@ -57,7 +55,6 @@ resource "aws_lb_listener_rule" "host_based_routing" {
   }
 }
 
-# 3. HTTP Listener: Redirect to HTTPS
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"

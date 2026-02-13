@@ -21,7 +21,6 @@ resource "aws_launch_template" "this" {
     instance_metadata_tags      = "enabled"
   }
 
-  # Dynamic Block for Storage
   dynamic "block_device_mappings" {
     for_each = var.extra_disks
     content {

@@ -25,7 +25,6 @@ resource "aws_iam_role" "gha_cli_role" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# Specific Permissions: No more "*"
 resource "aws_iam_role_policy" "cli_permissions" {
   name = "ASGUpdatePermissions"
   role = aws_iam_role.gha_cli_role.id

@@ -5,9 +5,8 @@ resource "aws_autoscaling_group" "this" {
   min_size            = var.min_size
   desired_capacity    = var.desired_capacity
 
-  # Wait for instances to pass health checks from the Load Balancer
   health_check_type         = "ELB"
-  health_check_grace_period = 300 # 5 minutes to bootstrap Nginx
+  health_check_grace_period = 300
 
   target_group_arns = [var.target_group_arn]
 
@@ -20,12 +19,10 @@ resource "aws_autoscaling_group" "this" {
   instance_refresh {
     strategy = "Rolling"
     preferences {
-      # Keep at least 50% of capacity online during the update
       min_healthy_percentage = 50
     }
   }
 
-  # Prevent Terraform from reverting versions changed by GitHub Actions
   lifecycle {
     ignore_changes = [
       launch_template[0].version,
@@ -33,7 +30,6 @@ resource "aws_autoscaling_group" "this" {
     ]
   }
 
-  # Tag instances so you can identify them in the console
   tag {
     key                 = "Name"
     value               = "${var.project}-${var.env}-web-node"
