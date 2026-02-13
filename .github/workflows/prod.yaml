@@ -1,0 +1,33 @@
+name: Deploy Prod
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'code/**' # Only triggers when code changes
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.OIDC_ROLE_PROD }}
+          aws-region: us-east-1
+      - name: Set Commit SHA
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+
+      - name: Create New Launch Template Version
+        run: |
+          make lt-update LT_NAME=${{ secrets.LT_NAME_PROD }} GIT_SHA=${{ env.SHORT_SHA }}
+
+      - name: Update ASG and Trigger Refresh
+        run: |
+          make asg-refresh ASG_NAME=${{ secrets.ASG_NAME_PROD }} LT_NAME=${{ secrets.LT_NAME_PROD }}

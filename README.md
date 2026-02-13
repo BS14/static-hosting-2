@@ -141,9 +141,12 @@ Static website hosting infrastructure on AWS using Launch Templates, Auto Scalin
 ### GitHub Secrets Required
 | Secret | Description |
 |--------|-------------|
-| `OIDC_ROLE_DEV` | IAM role ARN with permissions to update LT and ASG |
+| `OIDC_ROLE_DEV` | IAM role ARN with permissions to update LT and ASG (Dev) |
 | `LT_NAME_DEV` | Launch Template name (e.g., `fivexl-dev-web-launch-template`) |
 | `ASG_NAME_DEV` | Auto Scaling Group name (e.g., `fivexl-dev-web-asg`) |
+| `OIDC_ROLE_PROD` | IAM role ARN with permissions to update LT and ASG (Prod) |
+| `LT_NAME_PROD` | Launch Template name for Prod (e.g., `fivexl-prod-web-launch-template`) |
+| `ASG_NAME_PROD` | Auto Scaling Group name for Prod (e.g., `fivexl-prod-web-asg`) |
 
 ## Repository Structure
 
@@ -159,6 +162,11 @@ static-hosting-2/
 │   │   ├── variables.tf    # Terraform variables
 │   │   ├── provider.tf    # AWS provider configuration
 │   │   └── backend.tf     # Terraform backend (S3)
+│   ├── prod/
+│   │   ├── main.tf         # Root Terraform module (Prod)
+│   │   ├── variables.tf    # Terraform variables
+│   │   ├── provider.tf    # AWS provider configuration
+│   │   └── backend.tf     # Terraform backend (S3)
 │   └── modules/
 │       ├── acm/            # ACM certificate module
 │       ├── asg/            # Auto Scaling Group module
@@ -169,7 +177,9 @@ static-hosting-2/
 │       └── sg/             # Security Group module
 ├── .github/
 │   └── workflows/
-│       └── dev.yaml        # GitHub Actions workflow
+│       ├── dev.yaml        # GitHub Actions workflow (Dev)
+│       └── prod.yaml       # GitHub Actions workflow (Prod)
+├── images/                 # Architecture and deployment screenshots
 ├── Makefile                # Deployment automation scripts
 └── README.md               # This file
 ```
@@ -238,3 +248,14 @@ After `terraform apply`, the following outputs are available:
 - **Instance Metadata**: IMDSv2 required (prevents SSRF attacks)
 - **HTTPS**: HTTP automatically redirects to HTTPS
 - **ACM Certificate**: Managed SSL/TLS with automatic renewal
+
+## Actual Work
+
+### GitHub Actions Workflow
+![GitHub Actions Workflow](images/gh-actions.png)
+
+### Launch Template Updates
+![Launch Template Updates](images/launch-template-updates.png)
+
+### Instance Refresh
+![Instance Refresh](images/instance-refresh.png)
