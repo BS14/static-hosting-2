@@ -1,6 +1,7 @@
 name: Deploy Code via CLI
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'code/**' # Only triggers when code changes
@@ -20,6 +21,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.OIDC_ROLE_DEV }}
           aws-region: us-east-1
+      - name: Set Commit SHA
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Create New Launch Template Version
         id: lt_update
@@ -31,6 +34,7 @@ jobs:
           # Note: We use a heredoc to build the full bash script for the LT
           NEW_VERSION=$(aws ec2 create-launch-template-version \
             --launch-template-name "${{ secrets.LT_NAME_DEV }}" \
+            --version-description "Deployed from GitHub SHA: ${{ env.SHORT_SHA }}" \
             --source-version '$Latest' \
             --launch-template-data "{\"UserData\":\"$(echo "#!/bin/bash
             echo '$USER_DATA_CONTENT' > /var/www/html/index.html
