@@ -1,4 +1,4 @@
-name: Deploy Code via CLI
+name: Deploy Dev
 
 on:
   workflow_dispatch:
@@ -25,25 +25,9 @@ jobs:
         run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Create New Launch Template Version
-        id: lt_update
         run: |
-          sed -e '/{{CONTENT}}/{r code/index.html' -e 'd}' code/scripts/user_data.sh > final_script.sh
-          echo "ENCODED_USERDATA=$(base64 -w 0 < final_script.sh)" >> $GITHUB_ENV
-          NEW_VERSION=$(aws ec2 create-launch-template-version \
-            --launch-template-name "${{ secrets.LT_NAME_DEV }}" \
-            --version-description "Deployed from SHA: ${{ env.SHORT_SHA }}" \
-            --source-version '$Latest' \
-            --launch-template-data "{\"UserData\":\"${{ env.ENCODED_USERDATA }}\"}" \
-            --query 'LaunchTemplateVersion.VersionNumber' --output text)
-          echo "NEW_LT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          make lt-update LT_NAME=${{ secrets.LT_NAME_DEV }} GIT_SHA=${{ env.SHORT_SHA }}
 
       - name: Update ASG and Trigger Refresh
         run: |
-          # Point the ASG to the version we just created
-          aws autoscaling update-auto-scaling-group \
-            --auto-scaling-group-name "${{ secrets.ASG_NAME_DEV }}" \
-            --launch-template "LaunchTemplateName=${{ secrets.LT_NAME_DEV }},Version=$NEW_LT_VERSION"
-
-          # Start the rolling update
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name "${{ secrets.ASG_NAME_DEV }}"
+          make asg-refresh ASG_NAME=${{ secrets.ASG_NAME_DEV }} LT_NAME=${{ secrets.LT_NAME_DEV }}
