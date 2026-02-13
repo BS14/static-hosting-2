@@ -27,52 +27,14 @@ jobs:
       - name: Create New Launch Template Version
         id: lt_update
         run: |
-          FULL_USER_DATA=$(cat <<EOF
-          #!/bin/bash
-          # Update and Install Nginx
-          apt-get update -y
-          apt-get install -y nginx
-
-          # Create custom Nginx config for health checks (Matches your ALB TG)
-          cat <<EON > /etc/nginx/sites-available/default
-          server {
-              listen 80 default_server;
-              root /var/www/html;
-              index index.html;
-
-              location /health {
-                  access_log off;
-                  return 200 'OK';
-              }
-
-              location / {
-                  try_files \$uri \$uri/ =404;
-              }
-          }
-          EON
-
-          # Inject the code from your repository
-          cat <<EOC > /var/www/html/index.html
-          $(cat code/index.html)
-          EOC
-
-          # Restart Nginx
-          systemctl restart nginx
-          systemctl enable nginx
-          EOF
-          )
-          # We update the template with a new User Data script
-          # Note: We use a heredoc to build the full bash script for the LT
+          sed -e '/{{CONTENT}}/{r code/index.html' -e 'd}' code/scripts/user_data.sh > final_script.sh
+          echo "ENCODED_USERDATA=$(base64 -w 0 < final_script.sh)" >> $GITHUB_ENV
           NEW_VERSION=$(aws ec2 create-launch-template-version \
-            --launch-template-name "${{ secrets.LT_NAME_DEV }}" \
-            --version-description "Deployed from GitHub SHA: ${{ env.SHORT_SHA }}" \
+            --launch-template-id "${{ secrets.LT_ID }}" \
+            --version-description "Deployed from SHA: ${{ env.SHORT_SHA }}" \
             --source-version '$Latest' \
-            --launch-template-data "{\"UserData\":\"$(echo "#!/bin/bash
-            echo '$USER_DATA_CONTENT' > /var/www/html/index.html
-            systemctl restart nginx" | base64 -w 0)\"}" \
-            --query 'LaunchTemplateVersion.VersionNumber' \
-            --output text)
-          
+            --launch-template-data "{\"UserData\":\"${{ env.ENCODED_USERDATA }}\"}" \
+            --query 'LaunchTemplateVersion.VersionNumber' --output text)
           echo "NEW_LT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Update ASG and Trigger Refresh
