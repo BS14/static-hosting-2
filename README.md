@@ -69,15 +69,15 @@ Static website hosting infrastructure on AWS using Launch Templates, Auto Scalin
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           GitHub Actions                                    │
 │                                                                             │
-│   ┌──────────────┐    ┌──────────────────┐    ┌────────────────────────┐  │
-│   │  Push to     │───▶│  OIDC Auth       │───▶│  Create LT Version     │  │
-│   │  code/**     │    │  (sts.amazonaws) │    │  (index.html update)   │  │
-│   └──────────────┘    └──────────────────┘    └────────────────────────┘  │
-│                                                           │                │
-│                                                           ▼                │
+│   ┌──────────────┐    ┌──────────────────┐    ┌────────────────────────┐    │
+│   │  Push to     │───▶│  OIDC Auth       │───▶│  Create LT Version     │    │
+│   │  code/**     │    │  (sts.amazonaws) │    │  (index.html update)   │    │
+│   └──────────────┘    └──────────────────┘    └────────────────────────┘    │
+│                                                           │                 │
+│                                                           ▼                 │
 │                                                  ┌────────────────────────┐ │
 │                                                  │  Update ASG +          │ │
-│                                                  │  Instance Refresh     │ │
+│                                                  │  Instance Refresh      │ │
 │                                                  └────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -249,7 +249,7 @@ After `terraform apply`, the following outputs are available:
 - **HTTPS**: HTTP automatically redirects to HTTPS
 - **ACM Certificate**: Managed SSL/TLS with automatic renewal
 
-## Actual Work
+## Screenshots
 
 ### GitHub Actions Workflow
 ![GitHub Actions Workflow](images/gh-actions.png)
@@ -259,3 +259,6 @@ After `terraform apply`, the following outputs are available:
 
 ### Instance Refresh
 ![Instance Refresh](images/instance-refresh.png)
+
+### Running Website
+![Runnning Webpage](images/website.png)
